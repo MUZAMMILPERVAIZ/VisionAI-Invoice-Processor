@@ -188,27 +188,54 @@ def csvWriter(refinedText, output_file):
     df = pd.DataFrame([extracted_dict])
 
     if os.path.isfile(output_file):
-        existing_df = pd.read_csv(output_file)
-        df = pd.concat([existing_df, df], ignore_index=True)
-    else:
-        columns_order = ["Supplier Name", "Customer Name", "TRN of Supplier", "TRN of Customer",
-                         "Address of Supplier", "Address of Customer", "Date of Invoice", "Invoice Number",
-                         "Payment due date", "Description of goods / services ", "Net Amount ", "VAT Amount ",
-                         "Total Amount ", "Cross validated total amount ", "Email for correspondence",
-                         "Tax Invoice ", "Tax "]
+        os.remove(output_file)  # remove the old file before creating a new one
 
-        # Ensure all necessary columns exist in the DataFrame
-        for col in columns_order:
-            if col not in df.columns:
-                df[col] = None
+    columns_order = ["Supplier Name", "Customer Name", "TRN of Supplier", "TRN of Customer",
+                     "Address of Supplier", "Address of Customer", "Date of Invoice", "Invoice Number",
+                     "Payment due date", "Description of goods / services ", "Net Amount ", "VAT Amount ",
+                     "Total Amount ", "Cross validated total amount ", "Email for correspondence",
+                     "Tax Invoice ", "Tax "]
 
-        # Reorder the columns
-        df = df[columns_order]
+    # Ensure all necessary columns exist in the DataFrame
+    for col in columns_order:
+        if col not in df.columns:
+            df[col] = None
+
+    # Reorder the columns
+    df = df[columns_order]
 
     # Remove all columns in which all values are None or NaN
     df = df.dropna(how='all', axis=1)
 
     df.to_csv(output_file, index=False)
+
+
+# def csvWriter(refinedText, output_file):
+#     extracted_dict = eval(refinedText)
+#     df = pd.DataFrame([extracted_dict])
+
+#     if os.path.isfile(output_file):
+#         existing_df = pd.read_csv(output_file)
+#         df = pd.concat([existing_df, df], ignore_index=True)
+#     else:
+#         columns_order = ["Supplier Name", "Customer Name", "TRN of Supplier", "TRN of Customer",
+#                          "Address of Supplier", "Address of Customer", "Date of Invoice", "Invoice Number",
+#                          "Payment due date", "Description of goods / services ", "Net Amount ", "VAT Amount ",
+#                          "Total Amount ", "Cross validated total amount ", "Email for correspondence",
+#                          "Tax Invoice ", "Tax "]
+
+#         # Ensure all necessary columns exist in the DataFrame
+#         for col in columns_order:
+#             if col not in df.columns:
+#                 df[col] = None
+
+#         # Reorder the columns
+#         df = df[columns_order]
+
+#     # Remove all columns in which all values are None or NaN
+#     df = df.dropna(how='all', axis=1)
+
+#     df.to_csv(output_file, index=False)
 
 
 def get_binary_file_downloader_html(bin_file, file_label='File'):
