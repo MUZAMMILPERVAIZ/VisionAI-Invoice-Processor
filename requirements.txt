@@ -3,3 +3,4 @@ pandas==2.0.1
 streamlit==1.22.0
 google-cloud-documentai==2.15.0
 google-cloud-vision
+PyPDF2
