@@ -343,7 +343,7 @@ def main():
     # Process button
     if st.button('Process'):
         if os.path.isfile('_results.csv'):
-            os.remove(output_file)  # remove the old file before creating a new one
+            os.remove('_results.csv')  # remove the old file before creating a new one
         with st.spinner("Performing OCR..."):
 
             # Ensure files have been uploaded
