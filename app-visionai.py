@@ -221,9 +221,8 @@ def get_binary_file_downloader_html(bin_file, file_label='File'):
     return href
 
 
-
-def pipeline(file_path, type, output_file):
-
+# Vision AI OCR
+def pipeline_vision_ai(file_path, type, output_file):
     if type.startswith('image'):
         ocr_text = detect_text(file_path)
     else:
@@ -234,9 +233,70 @@ def pipeline(file_path, type, output_file):
     gptExtractedText = gptExtractor(ocr_text)
     correctText = gptCorrector(gptExtractedText)
     refinedText = gptRefiner(correctText)
-    csvWriter(refinedText, output_file)
 
-    return refinedText
+    return eval(refinedText)  # Return as a dictionary
+
+#Document AI Pipeline
+def pipeline_document_ai(file_path, type):
+    ocr_text = process_document_sample(
+        project_id="31507437754",
+        location="eu",
+        processor_id="76b3d3461c5d797b",
+        file_path=file_path,
+        mime_type=type,
+    )
+    gptExtractedText = gptExtractor(ocr_text)
+    correctText = gptCorrector(gptExtractedText)
+    refinedText = gptRefiner(correctText)
+
+    return eval(refinedText)  # Return as a dictionary
+
+
+# Merge results VISION
+def merge_results(vision_ai_res, document_ai_res):
+    # Let's make sure that we prioritize Vision AI results
+    for key, value in vision_ai_res.items():
+        if value is None or value == "":
+            vision_ai_res[key] = document_ai_res.get(key, None)
+
+    return vision_ai_res
+
+
+
+# Document AI OCR
+def process_document_sample(
+        project_id: str,
+        location: str,
+        processor_id: str,
+        file_path: str,
+        mime_type: str,
+        field_mask: str = None,
+):
+    # You must set the api_endpoint if you use a location other than 'us'.
+    opts = ClientOptions(api_endpoint=f"{location}-documentai.googleapis.com")
+
+    client = documentai.DocumentProcessorServiceClient(client_options=opts)
+
+    # The full resource name of the processor, e.g.:
+    # projects/{project_id}/locations/{location}/processors/{processor_id}
+    name = client.processor_path(project_id, location, processor_id)
+
+    # Read the file into memory
+    with open(file_path, "rb") as image:
+        image_content = image.read()
+
+    # Load Binary Data into Document AI RawDocument Object
+    raw_document = documentai.RawDocument(content=image_content, mime_type=mime_type)
+
+    # Configure the process request
+    request = documentai.ProcessRequest(
+        name=name, raw_document=raw_document, field_mask=field_mask
+    )
+
+    result = client.process_document(request=request)
+    document = result.document
+    return document.text
+
 
 
 def process_file(uploaded_file) -> Tuple[str, str, str]:
@@ -249,18 +309,27 @@ def process_file(uploaded_file) -> Tuple[str, str, str]:
 
     output_file = f"_results.csv"
 
-    # Run pipeline
-    result = pipeline(file_path=uploaded_file.name, type=uploaded_file.type, output_file=output_file)
+    # Run VisionAI pipeline
+    vision_ai_result = pipeline_vision_ai(file_path=uploaded_file.name, type=uploaded_file.type, output_file=output_file)
+
+    # Run DocumentAI pipeline
+    document_ai_result = pipeline_document_ai(file_path=uploaded_file.name, type=uploaded_file.type)
+
+    # Merge results
+    merged_result = merge_results(vision_ai_result, document_ai_result)
+
+    # Write to CSV
+    csvWriter(str(merged_result), output_file)  # Convert back to string before writing to CSV
 
     # Delete the file after processing
     os.remove(uploaded_file.name)
 
-    return result, uploaded_file.name, output_file
+    return merged_result, uploaded_file.name, output_file
 
 
 # Streamlit application
 st.set_page_config(
-    page_title="Document Processing App",
+    page_title="Invoice Extracting App",
     page_icon="🧊",
     layout="wide",
     initial_sidebar_state="expanded",
