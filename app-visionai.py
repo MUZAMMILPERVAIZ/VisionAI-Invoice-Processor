@@ -434,12 +434,12 @@ def main():
                 # Iterate through uploaded files
                 results = list(executor.map(process_file, uploaded_files))
 
-                for i, (result, uploaded_file_name, output_file) in enumerate(results):
-                    # Display results
-                    # st.write(result)
+                # for i, (result, uploaded_file_name, output_file) in enumerate(results):
+                #     # Display results
+                #     # st.write(result)
 
-                    # Update the progress bar
-                    progress_bar.progress((i + 1) / len(uploaded_files))
+                #     # Update the progress bar
+                #     progress_bar.progress((i + 1) / len(uploaded_files))
 
             # Stop the timer
             end_time = time.time()
